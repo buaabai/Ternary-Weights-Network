@@ -19,12 +19,13 @@ def Ternarize(tensor):
             pos_one = (w > delta[i]).type(torch.FloatTensor)
             neg_one = -1 * (w < -delta[i]).type(torch.FloatTensor)
             out = torch.add(pos_one,neg_one).view(tensor.size()[1:])
-        output[i] += out * alpha[i]
-    return output
+        output[i] += torch.mul(out,alpha[i])
+    return output.cuda()
             
 
 def Alpha(tensor,delta):
         Alpha = []
+        tensor = tensor.cpu()
         for i in range(tensor.size()[0]):
             count = 0
             abssum = 0
