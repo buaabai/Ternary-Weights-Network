@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable,Function
+from torch.autograd import Variable
 import torch.optim as optim
 from torchvision import datasets, transforms
-import torch.nn.functional as F
 import argparse
+
+import model as M
+import util as U
 
 def ParseArgs():
     parser = argparse.ArgumentParser(description='Ternary-Weights-Network Pytorch MNIST Example.')
@@ -66,7 +68,7 @@ def main():
                    ])),
     batch_size=TEST_BATCH_SIZE, shuffle=True,**kwargs)
 
-    model = 
+    model = M.LeNet5_T()
     if args.cuda:
         model.cuda()
     criterion = nn.CrossEntropyLoss()
@@ -80,15 +82,15 @@ def main():
     best_acc = 0.0 
     for epoch_index in range(1,args.epochs+1):
         adjust_learning_rate(learning_rate,optimizer,epoch_index,args.lr_epochs)
-        train(args,epoch_index,train_loader,model,optimizer,criterion,bin_op)
-        acc = test(model,test_loader,bin_op,criterion)
+        train(args,epoch_index,train_loader,model,optimizer,criterion)
+        acc = test(model,test_loader,criterion)
         if acc > best_acc:
             best_acc = acc
             #bin_op.Binarization()
-            save_model(model,best_acc)
+            U.save_model(model,best_acc)
             #bin_op.Restore()
 
-def train(args,epoch_index,train_loader,model,optimizer,criterion,bin_op):
+def train(args,epoch_index,train_loader,model,optimizer,criterion):
     model.train()
     for batch_idx,(data,target) in enumerate(train_loader):
         if args.cuda:
@@ -97,14 +99,9 @@ def train(args,epoch_index,train_loader,model,optimizer,criterion,bin_op):
 
         optimizer.zero_grad()
 
-        bin_op.Binarization()
-
         output = model(data)
         loss = criterion(output,target)
         loss.backward()
-
-        bin_op.Restore()
-        bin_op.UpdateBinaryGradWeight()
 
         optimizer.step()
 
@@ -113,12 +110,11 @@ def train(args,epoch_index,train_loader,model,optimizer,criterion,bin_op):
                 epoch_index, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data[0]))
 
-def test(model,test_loader,bin_op,criterion):
+def test(model,test_loader,criterion):
     model.eval()
     test_loss = 0
     correct = 0
 
-    bin_op.Binarization()
     for data,target in test_loader:
         data,target = data.cuda(),target.cuda()
         data,target = Variable(data,volatile=True),Variable(target)
@@ -126,8 +122,6 @@ def test(model,test_loader,bin_op,criterion):
         test_loss += criterion(output,target).data[0]
         pred = output.data.max(1,keepdim=True)[1]
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
-    
-    bin_op.Restore()
     
     acc = 100. * correct/len(test_loader.dataset)
 

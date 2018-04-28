@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-import torch.nn as nn
 
 def save_model(model,acc):
     print('==>>>Saving model ...')
