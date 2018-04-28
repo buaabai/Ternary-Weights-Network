@@ -44,7 +44,7 @@ def main():
     BATCH_SIZE = args.batch_size
     TEST_BATCH_SIZE = args.test_batch_size
     learning_rate = args.lr
-    #momentum = args.momentum
+    momentum = args.momentum
     weight_decay = args.weight_decay
 
     ###################################################################
@@ -77,18 +77,14 @@ def main():
     #optimizer = optim.SGD(model.parameters(),lr=learning_rate,momentum=momentum)
     optimizer = optim.Adam(model.parameters(),lr=learning_rate,weight_decay=weight_decay)
     
-    #bin_op = util.Binop(model)
-
     best_acc = 0.0 
     for epoch_index in range(1,args.epochs+1):
         adjust_learning_rate(learning_rate,optimizer,epoch_index,args.lr_epochs)
         train(args,epoch_index,train_loader,model,optimizer,criterion)
-        acc = test(model,test_loader,criterion)
+        acc = test(args,model,test_loader,criterion)
         if acc > best_acc:
             best_acc = acc
-            #bin_op.Binarization()
             U.save_model(model,best_acc)
-            #bin_op.Restore()
 
 def train(args,epoch_index,train_loader,model,optimizer,criterion):
     model.train()
@@ -110,14 +106,15 @@ def train(args,epoch_index,train_loader,model,optimizer,criterion):
                 epoch_index, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data[0]))
 
-def test(model,test_loader,criterion):
+def test(args,model,test_loader,criterion):
     model.eval()
     test_loss = 0
     correct = 0
 
     for data,target in test_loader:
-        data,target = data.cuda(),target.cuda()
-        data,target = Variable(data,volatile=True),Variable(target)
+        if args.cuda:
+            data,target = data.cuda(),target.cuda()
+        data,target = Variable(data),Variable(target)
         output = model(data)
         test_loss += criterion(output,target).data[0]
         pred = output.data.max(1,keepdim=True)[1]

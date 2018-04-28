@@ -65,18 +65,18 @@ class TernaryConv2d(nn.Conv2d):
 class LeNet5_T(nn.Module):
     def __init__(self):
         super(LeNet5_T,self).__init__()
-        self.conv1 = TernaryConv2d(1,6,kernel_size = 5)
-        self.bn_conv1 = nn.BatchNorm2d(6)
-        self.conv2 = TernaryConv2d(6,16,kernel_size = 3)
-        self.bn_conv2 = nn.BatchNorm2d(16)
-        self.fc1 = TernaryLinear(400,50)
-        self.fc2 = TernaryLinear(50,10)
+        self.conv1 = TernaryConv2d(1,32,kernel_size = 5)
+        self.bn_conv1 = nn.BatchNorm2d(32)
+        self.conv2 = TernaryConv2d(32,64,kernel_size = 5)
+        self.bn_conv2 = nn.BatchNorm2d(64)
+        self.fc1 = TernaryLinear(1024,512)
+        self.fc2 = TernaryLinear(512,10)
     def forward(self,x):
         x = self.conv1(x)
         x = F.relu(F.max_pool2d(self.bn_conv1(x),2))
         x = self.conv2(x)
         x = F.relu(F.max_pool2d(self.bn_conv2(x),2))
-        x = x.view(-1,400)
+        x = x.view(-1,1024)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x  
