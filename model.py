@@ -16,16 +16,15 @@ def Ternarize(tensor):
     alpha = Alpha(tensor,delta)
     for i in range(tensor.size()[0]):
         for w in tensor[i].view(1,-1):
-            pos_one = (w > delta[i]).type(torch.cuda.FloatTensor)
-            neg_one = -1 * (w < -delta[i]).type(torch.cuda.FloatTensor)
+            pos_one = (w > delta[i]).type(torch.FloatTensor)
+            neg_one = -1 * (w < -delta[i]).type(torch.FloatTensor)
             out = torch.add(pos_one,neg_one).view(tensor.size()[1:])
         output[i] += out * alpha[i]
     return output
             
 
 def Alpha(tensor,delta):
-        I_delta = []
-        Abssum = []
+        Alpha = []
         for i in range(tensor.size()[0]):
             count = 0
             abssum = 0
@@ -33,12 +32,10 @@ def Alpha(tensor,delta):
             for w in absvalue:
                 truth_value = w > delta[i] #print to see
             count = truth_value.sum()
-            abssum = torch.matmul(w,truth_value.type(torch.cuda.FloatTensor))
-            I_delta.append(count)
-            Abssum.append(abssum)
-        Alpha = [Abssum[i]/I_delta[i] for i in range(tensor.size()[0])]
-        Alpha = torch.Tensor(Alpha)
-        return Alpha
+            abssum = torch.matmul(absvalue,truth_value.type(torch.FloatTensor).view(-1,1))
+            alpha = (abssum/count).numpy().tolist()
+            Alpha.append(alpha[0][0])
+        return torch.Tensor(Alpha)
 
 def Delta(tensor):
     n = tensor[0].nelement()
