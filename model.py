@@ -33,9 +33,11 @@ def Alpha(tensor,delta):
                 truth_value = w > delta[i] #print to see
             count = truth_value.sum()
             abssum = torch.matmul(absvalue,truth_value.type(torch.FloatTensor).view(-1,1))
-            alpha = (abssum/count).numpy().tolist()
-            Alpha.append(alpha[0][0])
-        return torch.Tensor(Alpha)
+            Alpha.append(abssum/count)
+        alpha = Alpha[0]
+        for i in range(len(Alpha) - 1):
+            alpha = torch.cat((alpha,Alpha[i+1]))
+        return alpha
 
 def Delta(tensor):
     n = tensor[0].nelement()
