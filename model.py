@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 def Ternarize(tensor):
-    output = torch.zeros(tensor.size())
+    output = torch.zeros(tensor.size()).cuda()
     delta = Delta(tensor)
     alpha = Alpha(tensor,delta)
     for i in range(tensor.size()[0]):
