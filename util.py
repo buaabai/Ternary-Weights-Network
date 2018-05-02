@@ -37,16 +37,17 @@ class TernarizeOp:
             self.target_modules[index].data = self.Ternarize(self.target_modules[index].data)
     
     def Ternarize(self,tensor):
+        tensor = tensor.cpu()
         output = torch.zeros(tensor.size())
         delta = self.Delta(tensor)
         alpha = self.Alpha(tensor,delta)
         for i in range(tensor.size()[0]):
             for w in tensor[i].view(1,-1):
                 pos_one = (w > delta[i]).type(torch.FloatTensor)
-                neg_one = -1 * (w < -delta[i]).type(torch.FloatTensor)
+                neg_one = torch.mul((w < -delta[i]).type(torch.FloatTensor),-1)
             out = torch.add(pos_one,neg_one).view(tensor.size()[1:])
             output[i] = torch.add(output[i],torch.mul(out,alpha[i]))
-        return output
+        return output.cuda()
             
 
     def Alpha(self,tensor,delta):
