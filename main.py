@@ -106,6 +106,7 @@ def train(args,epoch_index,train_loader,model,optimizer,criterion):
                 epoch_index, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data[0]))
 
+
 def test(args,model,test_loader,criterion):
     model.eval()
     test_loss = 0

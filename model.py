@@ -11,13 +11,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 def Ternarize(tensor):
-    output = torch.zeros(tensor.size()).cuda()
+    output = torch.zeros(tensor.size())
     delta = Delta(tensor)
     alpha = Alpha(tensor,delta)
     for i in range(tensor.size()[0]):
         for w in tensor[i].view(1,-1):
-            pos_one = (w > delta[i]).type(torch.cuda.FloatTensor)
-            neg_one = -1 * (w < -delta[i]).type(torch.cuda.FloatTensor)
+            pos_one = (w > delta[i]).type(torch.FloatTensor)
+            neg_one = -1 * (w < -delta[i]).type(torch.FloatTensor)
         out = torch.add(pos_one,neg_one).view(tensor.size()[1:])
         output[i] = torch.add(output[i],torch.mul(out,alpha[i]))
     return output
@@ -32,7 +32,7 @@ def Alpha(tensor,delta):
             for w in absvalue:
                 truth_value = w > delta[i] #print to see
             count = truth_value.sum()
-            abssum = torch.matmul(absvalue,truth_value.type(torch.cuda.FloatTensor).view(-1,1))
+            abssum = torch.matmul(absvalue,truth_value.type(torch.FloatTensor).view(-1,1))
             Alpha.append(abssum/count)
         alpha = Alpha[0]
         for i in range(len(Alpha) - 1):
@@ -73,6 +73,25 @@ class LeNet5_T(nn.Module):
         self.bn_conv2 = nn.BatchNorm2d(64)
         self.fc1 = TernaryLinear(1024,512)
         self.fc2 = TernaryLinear(512,10)
+    def forward(self,x):
+        x = self.conv1(x)
+        x = F.relu(F.max_pool2d(self.bn_conv1(x),2))
+        x = self.conv2(x)
+        x = F.relu(F.max_pool2d(self.bn_conv2(x),2))
+        x = x.view(-1,1024)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x  
+
+class LeNet5(nn.Module):
+    def __init__(self):
+        super(LeNet5,self).__init__()
+        self.conv1 = nn.Conv2d(1,32,kernel_size = 5)
+        self.bn_conv1 = nn.BatchNorm2d(32)
+        self.conv2 = nn.Conv2d(32,64,kernel_size = 5)
+        self.bn_conv2 = nn.BatchNorm2d(64)
+        self.fc1 = nn.Linear(1024,512)
+        self.fc2 = nn.Linear(512,10)
     def forward(self,x):
         x = self.conv1(x)
         x = F.relu(F.max_pool2d(self.bn_conv1(x),2))
